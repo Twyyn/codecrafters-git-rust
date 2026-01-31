@@ -1,20 +1,17 @@
-#[allow(unused_imports)]
-use std::env;
-#[allow(unused_imports)]
-use std::fs;
+use codecrafters_git::{cli::Args, fs::init_git_dir};
+use std::error::Error;
 
-fn main() {
-    // You can use print statements as follows for debugging, they'll be visible when running tests.
-    eprintln!("Logs from your program will appear here!");
+fn main() -> Result<(), Box<dyn Error>> {
+    let args = Args::parse();
 
-    let args: Vec<String> = env::args().collect();
-    if args[1] == "init" {
-        fs::create_dir(".git").unwrap();
-        fs::create_dir(".git/objects").unwrap();
-        fs::create_dir(".git/refs").unwrap();
-        fs::write(".git/HEAD", "ref: refs/heads/main\n").unwrap();
-        println!("Initialized git directory")
-    } else {
-        println!("unknown command: {}", args[1])
+    match args.command.as_str() {
+        "init" => {
+            init_git_dir()?;
+            println!("Initialized git directory")
+        }
+
+        _ => println!("Unknown command: {}", args.command),
     }
+
+    Ok(())
 }
