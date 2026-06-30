@@ -1,8 +1,13 @@
-use crate::repository::Repository;
-use anyhow::Result;
+use std::path::Path;
 
-pub fn run() -> Result<()> {
-    Repository::new(&std::env::current_dir()?)?;
-    println!("Initialized git directory");
+use super::error::CommandError;
+use crate::repo::Repository;
+
+pub fn init(root: &Path) -> Result<(), CommandError> {
+    let repo = Repository::new(root)?;
+    println!(
+        "Initialized empty Git repository in {}",
+        repo.directory.display()
+    );
     Ok(())
 }

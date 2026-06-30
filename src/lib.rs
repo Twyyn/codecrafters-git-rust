@@ -1,4 +1,5 @@
 mod commands;
-mod repository;
+mod objects;
+mod repo;
 
 pub use commands::Args;
