@@ -38,38 +38,10 @@ impl Repository {
     pub fn read_object(&self, hash: &str) -> Result<Object, RepoError> {
         let path = self.discover_object(hash);
 
-        let file = File::open(&path).map_err(|e| match e.kind() {
-            ErrorKind::NotFound => RepoError::InvalidObjectFile(path.display().to_string()),
-            _ => RepoError::Io(e),
-        })?;
+        let file = File::open(&path).map_err(RepoError::Io)?;
+        let mut reader = BufReader::new(ZlibDecoder::new(file));
 
-        let decoder = ZlibDecoder::new(file);
-        let mut reader = BufReader::new(decoder);
-
-        let mut bytes = Vec::new();
-        reader.read_until(0, &mut bytes)?;
-
-        if bytes.pop() != Some(0) {
-            return Err(RepoError::InvalidObjectHeaderFormat);
-        }
-
-        let header = std::str::from_utf8(&bytes)?;
-        let Some((kind, size)) = header.split_once(' ') else {
-            return Err(RepoError::InvalidObjectHeader(header.into()));
-        };
-
-        let kind = kind
-            .parse::<ObjectKind>()
-            .map_err(|_| RepoError::InvalidObjectKind(kind.into()))?;
-
-        let size = size
-            .parse::<usize>()
-            .map_err(|_| RepoError::InvalidObjectSize(size.into()))?;
-
-        let mut bytes = vec![0u8; size];
-        reader.read_exact(&mut bytes)?;
-
-        Ok(Object { kind, bytes })
+        Ok(Object::try_from(&mut reader)?)
     }
 
     fn discover_object(&self, hash: &str) -> PathBuf {
@@ -87,22 +59,10 @@ pub enum RepoError {
     Io(#[from] std::io::Error),
 
     #[error(transparent)]
-    Utf8(#[from] std::str::Utf8Error),
+    Object(#[from] crate::objects::ObjectError),
 
     #[error("object file does not exist: {0:?}")]
-    InvalidObjectFile(String),
-
-    #[error("object header is not NUL-terminated")]
-    InvalidObjectHeaderFormat,
-
-    #[error("malformed object header: {0:?}")]
-    InvalidObjectHeader(String),
-
-    #[error("invalid object size: {0:?}")]
-    InvalidObjectSize(String),
-
-    #[error("invalid object kind: {0:?}")]
-    InvalidObjectKind(String),
+    ObjectFile(String),
 
     #[error("not a git repository: {0}")]
     NotARepository(String),

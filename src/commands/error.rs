@@ -6,11 +6,11 @@ pub enum CommandError {
     Io(#[from] std::io::Error),
 
     #[error(transparent)]
-    ObjectParseError(#[from] crate::objects::ObjectParseError),
+    Object(#[from] crate::objects::ObjectError),
 
     #[error(transparent)]
-    RepoError(#[from] crate::repo::RepoError),
+    Repo(#[from] crate::repo::RepoError),
 
     #[error("object file does not exist: {0:?}")]
-    InvalidObjectFile(String),
+    ObjectFile(String),
 }

@@ -2,7 +2,7 @@ mod cat_file;
 mod error;
 mod init;
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use clap::{Parser, Subcommand};
 use error::CommandError;
@@ -19,10 +19,17 @@ pub struct Args {
 #[derive(Debug, Subcommand)]
 enum Commands {
     Init,
+
     CatFile {
         #[arg(short = 'p', required = true)]
-        pretty: bool,
+        pretty_print: bool,
         hash: String,
+    },
+
+    HashObject {
+        #[arg(short = 'w')]
+        write: bool,
+        file: PathBuf,
     },
 }
 
@@ -33,6 +40,9 @@ impl Args {
             Commands::CatFile { hash, .. } => {
                 let repo = Repository::open(Path::new("."))?;
                 cat_file::cat_file(&repo, &hash)
+            }
+            Commands::HashObject { write, file } => {
+                todo!()
             }
         }
     }
